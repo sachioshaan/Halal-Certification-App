@@ -38,7 +38,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { AiRecommendations } from "@/components/shared/ai-recommendations";
 import { documents } from "@/lib/mock-data";
+
+const AI_RECS = [
+  {
+    id: "doc-1",
+    text: "2 documents expire within 30 days — Sijil Pengendali Makanan (Ahmad Faris) and Supplier Cert (Delima Spices). Upload renewals now to avoid blocking your active application.",
+  },
+  {
+    id: "doc-2",
+    text: "Food Premise Registration for KLCC Kiosk is missing. This is a blocking requirement for the Food Premises application currently in draft.",
+  },
+];
 
 const DOC_TYPES = ["All", "Company Registration", "Business Licence", "Food Premise Registration",
   "Halal Training Certificate", "Supplier Halal Certificate", "Ingredient Specification",
@@ -82,6 +94,8 @@ export default function DocumentsPage() {
           </Card>
         ))}
       </div>
+
+      <AiRecommendations recommendations={AI_RECS} />
 
       <Card>
         <CardHeader>

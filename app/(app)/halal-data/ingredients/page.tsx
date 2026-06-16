@@ -28,7 +28,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { AiRecommendations } from "@/components/shared/ai-recommendations";
 import { ingredients } from "@/lib/mock-data";
+
+const AI_RECS = [
+  {
+    id: "ing-1",
+    text: "3 high-risk ingredients are linked to Nasi Lemak Special — Santan Segar, Pes Cili, and Pewarna Makanan. Recommend sourcing JAKIM-certified alternatives before the next application.",
+  },
+  {
+    id: "ing-2",
+    text: "Gelatin Serbuk (ING-008) has an expired certificate. This ingredient is marked Critical and will block any application that includes it.",
+  },
+];
 
 const RISK_FLAG_LABELS: Record<string, { label: string; emoji: string; className: string }> = {
   "animal-derived": { label: "Animal", emoji: "🐄", className: "bg-orange-100 text-orange-700 border-orange-200" },
@@ -78,6 +90,8 @@ export default function IngredientsPage() {
           </Card>
         ))}
       </div>
+
+      <AiRecommendations recommendations={AI_RECS} />
 
       <Card>
         <CardHeader>

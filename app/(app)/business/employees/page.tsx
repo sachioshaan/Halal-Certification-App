@@ -27,7 +27,19 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { AiRecommendations } from "@/components/shared/ai-recommendations";
 import { employees, locations } from "@/lib/mock-data";
+
+const AI_RECS = [
+  {
+    id: "emp-1",
+    text: "Ahmad bin Razali's food handler certificate expires in 14 days. Renew and upload the new certificate to maintain compliance.",
+  },
+  {
+    id: "emp-2",
+    text: "Central Kitchen has no active Halal PIC assigned. Assign one from your existing employees to meet the Food Premises requirement.",
+  },
+];
 
 export default function EmployeesPage() {
   const [locationFilter, setLocationFilter] = useState<string | null>("all");
@@ -68,6 +80,8 @@ export default function EmployeesPage() {
           </Card>
         ))}
       </div>
+
+      <AiRecommendations recommendations={AI_RECS} />
 
       <Card>
         <CardHeader>

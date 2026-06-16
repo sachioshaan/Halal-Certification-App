@@ -59,8 +59,13 @@ function CollapsibleTrigger({
   const handleClick = () => setOpen(!open);
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
-      onClick: handleClick,
+    const child = children as React.ReactElement<{ onClick?: React.MouseEventHandler }>;
+    const existingOnClick = child.props.onClick;
+    return React.cloneElement(child, {
+      onClick: (e: React.MouseEvent) => {
+        existingOnClick?.(e);
+        handleClick();
+      },
     });
   }
 

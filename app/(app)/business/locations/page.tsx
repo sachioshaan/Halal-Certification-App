@@ -15,7 +15,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ReadinessScore } from "@/components/shared/readiness-score";
+import { AiRecommendations } from "@/components/shared/ai-recommendations";
 import { locations, employees, menus } from "@/lib/mock-data";
+
+const AI_RECS = [
+  {
+    id: "loc-1",
+    text: "Central Kitchen (Petaling Jaya) has no assigned Halal Supervisor. This is a blocking requirement for the Food Premises application — assign one under Employees.",
+  },
+  {
+    id: "loc-2",
+    text: "KLCC Kiosk has been operating for less than 3 months. New applications require at least 3 months of operation before submission.",
+  },
+];
 
 export default function LocationsPage() {
   const [selectedLocation, setSelectedLocation] = useState<typeof locations[0] | null>(null);
@@ -50,6 +62,8 @@ export default function LocationsPage() {
           </Card>
         ))}
       </div>
+
+      <AiRecommendations recommendations={AI_RECS} />
 
       {/* Location cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -18,7 +19,7 @@ import {
   BarChart3,
   Sparkles,
   Settings,
-  ChevronRight,
+  ChevronDown,
   ShieldCheck,
 } from "lucide-react";
 import {
@@ -32,15 +33,7 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { tasks, workspace } from "@/lib/mock-data";
 
@@ -54,8 +47,11 @@ export function AppSidebar() {
     return pathname.startsWith(href);
   };
 
+  const [businessOpen, setBusinessOpen] = useState(true);
+  const [halalOpen, setHalalOpen] = useState(true);
+
   return (
-    <Sidebar>
+    <Sidebar collapsible="none">
       {/* Header */}
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-1 py-2">
@@ -99,56 +95,53 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Setup</SidebarGroupLabel>
           <SidebarMenu>
-            <Collapsible defaultOpen={isActive("/business")} className="group/collapsible">
-              <SidebarMenuItem>
-                <CollapsibleTrigger>
-                  <SidebarMenuButton isActive={isActive("/business")}>
-                    <Building2 />
-                    <span>Business Setup</span>
-                    <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+            <SidebarMenuItem>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setBusinessOpen((v) => !v);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && setBusinessOpen((v) => !v)}
+                style={{ cursor: "pointer" }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors select-none"
+              >
+                <Building2 className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">Business Setup</span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${businessOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </SidebarMenuItem>
+
+            {businessOpen && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/business/company")} render={<Link href="/business/company" />}>
+                    <Building2 className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Company</span>
                   </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/business/company")}
-                        render={<Link href="/business/company" />}
-                      >
-                        Company
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/business/locations")}
-                        render={<Link href="/business/locations" />}
-                      >
-                        <MapPin className="h-3.5 w-3.5" />
-                        Locations
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/business/employees")}
-                        render={<Link href="/business/employees" />}
-                      >
-                        <Users className="h-3.5 w-3.5" />
-                        Employees
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/business/users")}
-                        render={<Link href="/business/users" />}
-                      >
-                        <UserCog className="h-3.5 w-3.5" />
-                        Users & Roles
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/business/locations")} render={<Link href="/business/locations" />}>
+                    <MapPin className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Locations</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/business/employees")} render={<Link href="/business/employees" />}>
+                    <Users className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Employees</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/business/users")} render={<Link href="/business/users" />}>
+                    <UserCog className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Users &amp; Roles</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
           </SidebarMenu>
         </SidebarGroup>
 
@@ -156,57 +149,53 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Halal Data</SidebarGroupLabel>
           <SidebarMenu>
-            <Collapsible defaultOpen={isActive("/halal-data")} className="group/collapsible">
-              <SidebarMenuItem>
-                <CollapsibleTrigger>
-                  <SidebarMenuButton isActive={isActive("/halal-data")}>
-                    <FlaskConical />
-                    <span>Halal Data</span>
-                    <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+            <SidebarMenuItem>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setHalalOpen((v) => !v);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && setHalalOpen((v) => !v)}
+                style={{ cursor: "pointer" }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors select-none"
+              >
+                <FlaskConical className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">Halal Data</span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${halalOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </SidebarMenuItem>
+
+            {halalOpen && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/halal-data/suppliers")} render={<Link href="/halal-data/suppliers" />}>
+                    <Truck className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Suppliers</span>
                   </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/halal-data/suppliers")}
-                        render={<Link href="/halal-data/suppliers" />}
-                      >
-                        <Truck className="h-3.5 w-3.5" />
-                        Suppliers
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/halal-data/ingredients")}
-                        render={<Link href="/halal-data/ingredients" />}
-                      >
-                        <FlaskConical className="h-3.5 w-3.5" />
-                        Ingredients
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/halal-data/menus")}
-                        render={<Link href="/halal-data/menus" />}
-                      >
-                        <UtensilsCrossed className="h-3.5 w-3.5" />
-                        Menus / Products
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton
-                        isActive={isActive("/halal-data/documents")}
-                        render={<Link href="/halal-data/documents" />}
-                      >
-                        <FolderOpen className="h-3.5 w-3.5" />
-                        Documents
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/halal-data/ingredients")} render={<Link href="/halal-data/ingredients" />}>
+                    <FlaskConical className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Ingredients</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/halal-data/menus")} render={<Link href="/halal-data/menus" />}>
+                    <UtensilsCrossed className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Menus / Products</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={isActive("/halal-data/documents")} render={<Link href="/halal-data/documents" />}>
+                    <FolderOpen className="h-4 w-4 shrink-0 ml-4" />
+                    <span>Documents</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
           </SidebarMenu>
         </SidebarGroup>
 

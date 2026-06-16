@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, LayoutGrid, List } from "lucide-react";
+import { Plus, LayoutGrid, List, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,12 +23,30 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ReadinessIndicator } from "@/components/shared/readiness-score";
+import { AiRecommendations } from "@/components/shared/ai-recommendations";
 import { menus, ingredients } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+
+const AI_RECS = [
+  {
+    id: "menu-1",
+    text: "Nasi Lemak Special could use Supplier Delima Spices' certified coconut milk as a direct substitute for the current uncertified brand — same grade, valid until Dec 2025.",
+  },
+  {
+    id: "menu-2",
+    text: "3 menu items have ingredients with no halal certificate. Resolve these before creating a new application to avoid blocking requirements.",
+  },
+];
 
 export default function MenusPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<typeof menus[0] | null>(null);
+
+  const stats = [
+    { label: "Total Menus", value: menus.length, color: "text-primary" },
+    { label: "Fully Ready", value: menus.filter((m) => m.readiness === "pass").length, color: "text-green-600" },
+    { label: "Needs Attention", value: menus.filter((m) => m.readiness === "warning").length, color: "text-amber-600" },
+    { label: "Blocked", value: menus.filter((m) => m.readiness === "fail").length, color: "text-red-600" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -63,14 +81,23 @@ export default function MenusPage() {
         }
       />
 
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {stats.map(({ label, value, color }) => (
+          <Card key={label}>
+            <CardContent className="p-4 text-center">
+              <div className={`text-xl font-bold ${color}`}>{value}</div>
+              <div className="text-xs text-muted-foreground">{label}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <AiRecommendations recommendations={AI_RECS} />
+
       {view === "grid" ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {menus.map((menu) => (
-            <Card
-              key={menu.id}
-              className="cursor-pointer hover:border-primary/30 transition-colors"
-              onClick={() => setSelected(menu)}
-            >
+            <Card key={menu.id} className="hover:border-primary/30 transition-colors">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-sm font-medium">{menu.name}</CardTitle>
@@ -78,7 +105,7 @@ export default function MenusPage() {
                 </div>
                 <Badge variant="outline" className="text-xs w-fit">{menu.category}</Badge>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 <p className="text-xs text-muted-foreground line-clamp-2">{menu.description}</p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{menu.ingredients.length} ingredients</span>
@@ -87,6 +114,15 @@ export default function MenusPage() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">{menu.locationName}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-7 text-xs"
+                  onClick={() => setSelected(menu)}
+                >
+                  <Eye className="h-3.5 w-3.5 mr-1.5" />
+                  View Details
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -102,12 +138,12 @@ export default function MenusPage() {
                   <TableHead>Location</TableHead>
                   <TableHead>Ingredients</TableHead>
                   <TableHead>Readiness</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[60px]">View</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {menus.map((menu) => (
-                  <TableRow key={menu.id} className="cursor-pointer" onClick={() => setSelected(menu)}>
+                  <TableRow key={menu.id}>
                     <TableCell className="font-medium text-sm">{menu.name}</TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{menu.category}</Badge></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{menu.locationName}</TableCell>
@@ -116,7 +152,14 @@ export default function MenusPage() {
                       <ReadinessIndicator readiness={menu.readiness as "pass" | "warning" | "fail"} />
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSelected(menu)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
