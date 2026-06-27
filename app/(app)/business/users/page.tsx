@@ -47,11 +47,12 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<string | null>("Viewer");
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All Roles");
 
   const filteredUsers = users.filter((u) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const searchOk = !search.trim() || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
+    const roleOk = roleFilter === "All Roles" || u.role === roleFilter;
+    return searchOk && roleOk;
   });
 
   return (
@@ -74,14 +75,27 @@ export default function UsersPage() {
               <CardTitle className="text-base">Team Members</CardTitle>
               <CardDescription>{filteredUsers.length} members · Nasi Lemak Sdn Bhd workspace</CardDescription>
             </div>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8 w-48 text-xs"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 h-8 w-48 text-xs"
+                />
+              </div>
+              <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val ?? "All Roles")}>
+                <SelectTrigger className="w-40 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Roles">All Roles</SelectItem>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>

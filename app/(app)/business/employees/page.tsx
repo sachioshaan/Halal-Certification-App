@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Filter, Pencil, Trash2 } from "lucide-react";
+import { Plus, Filter, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,13 +54,15 @@ const AI_RECS = [
 export default function EmployeesPage() {
   const [locationFilter, setLocationFilter] = useState<string | null>("All Locations");
   const [roleFilter, setRoleFilter] = useState<string | null>("All Roles");
+  const [search, setSearch] = useState("");
   const [editEmployee, setEditEmployee] = useState<typeof employees[0] | null>(null);
   const [deleteEmployee, setDeleteEmployee] = useState<typeof employees[0] | null>(null);
 
   const filtered = employees.filter((e) => {
     const locOk = !locationFilter || locationFilter === "All Locations" || e.locationId === locationFilter;
     const roleOk = !roleFilter || roleFilter === "All Roles" || e.halalRole === roleFilter;
-    return locOk && roleOk;
+    const searchOk = !search.trim() || e.name.toLowerCase().includes(search.toLowerCase()) || e.icNo.toLowerCase().includes(search.toLowerCase());
+    return locOk && roleOk && searchOk;
   });
 
   return (
@@ -103,6 +105,15 @@ export default function EmployeesPage() {
               <CardDescription>{filtered.length} employees</CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or IC..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 h-8 w-48 text-xs"
+                />
+              </div>
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={locationFilter} onValueChange={(val) => setLocationFilter(val)}>
                 <SelectTrigger className="w-40 h-8 text-xs">

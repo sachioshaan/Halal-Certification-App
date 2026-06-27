@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, LayoutGrid, List, Eye, Pencil, Trash2, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -40,6 +48,16 @@ const AI_RECS = [
 export default function MenusPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<typeof menus[0] | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
+
+  const filteredMenus = menus.filter((m) => {
+    const catOk = categoryFilter === "All Categories" || m.category === categoryFilter;
+    const searchOk = !search.trim() || m.name.toLowerCase().includes(search.toLowerCase()) || m.category.toLowerCase().includes(search.toLowerCase());
+    return catOk && searchOk;
+  });
+
+  const categories = Array.from(new Set(menus.map((m) => m.category)));
 
   const stats = [
     { label: "Total Menus", value: menus.length, color: "text-primary" },
@@ -94,9 +112,36 @@ export default function MenusPage() {
 
       <AiRecommendations recommendations={AI_RECS} />
 
+      {/* Search & Filter */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search menus by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 h-9 text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val ?? "All Categories")}>
+            <SelectTrigger className="w-40 h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Categories">All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {view === "grid" ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {menus.map((menu) => (
+          {filteredMenus.map((menu) => (
             <Card key={menu.id} className="hover:border-primary/30 transition-colors">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
@@ -142,7 +187,7 @@ export default function MenusPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {menus.map((menu) => (
+                {filteredMenus.map((menu) => (
                   <TableRow key={menu.id}>
                     <TableCell className="font-medium text-sm">{menu.name}</TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{menu.category}</Badge></TableCell>

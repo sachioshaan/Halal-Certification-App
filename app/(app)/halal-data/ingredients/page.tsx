@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Filter, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Filter, Eye, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -68,16 +68,21 @@ const RISK_FLAG_LABELS: Record<string, { label: string; emoji: string; className
 
 export default function IngredientsPage() {
   const [riskFilter, setRiskFilter] = useState<string | null>("All Ingredients");
+  const [search, setSearch] = useState("");
   const [viewIngredient, setViewIngredient] = useState<typeof ingredients[0] | null>(null);
   const [editIngredient, setEditIngredient] = useState<typeof ingredients[0] | null>(null);
   const [deleteIngredient, setDeleteIngredient] = useState<typeof ingredients[0] | null>(null);
 
   const filtered = ingredients.filter((ing) => {
-    if (!riskFilter || riskFilter === "All Ingredients") return true;
-    if (riskFilter === "High Risk / Critical") return ing.isCritical;
-    if (riskFilter === "Cert Expired") return ing.certStatus === "Expired";
-    if (riskFilter === "Cert Expiring") return ing.certStatus === "Expiring Soon";
-    return true;
+    const filterOk = (() => {
+      if (!riskFilter || riskFilter === "All Ingredients") return true;
+      if (riskFilter === "High Risk / Critical") return ing.isCritical;
+      if (riskFilter === "Cert Expired") return ing.certStatus === "Expired";
+      if (riskFilter === "Cert Expiring") return ing.certStatus === "Expiring Soon";
+      return true;
+    })();
+    const searchOk = !search.trim() || ing.name.toLowerCase().includes(search.toLowerCase()) || ing.brand.toLowerCase().includes(search.toLowerCase()) || ing.supplierName.toLowerCase().includes(search.toLowerCase());
+    return filterOk && searchOk;
   });
 
   const stats = [
@@ -121,6 +126,15 @@ export default function IngredientsPage() {
               <CardDescription>{filtered.length} ingredients</CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, brand, supplier..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 h-8 w-56 text-xs"
+                />
+              </div>
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={riskFilter} onValueChange={(val) => setRiskFilter(val)}>
                 <SelectTrigger className="w-40 h-8 text-xs">
