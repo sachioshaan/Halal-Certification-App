@@ -39,7 +39,7 @@ export default function LocationsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${selectedLocation ? "overflow-hidden" : ""}`}>
       <PageHeader
         title="Locations"
         description="Manage your business premises and branches"
@@ -126,7 +126,7 @@ export default function LocationsPage() {
 
       {/* Location Detail Sheet */}
       <Sheet open={!!selectedLocation} onOpenChange={() => setSelectedLocation(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetContent className="sm:max-w-md overflow-y-auto p-6">
           {selectedLocation && (
             <>
               <SheetHeader className="mb-6">

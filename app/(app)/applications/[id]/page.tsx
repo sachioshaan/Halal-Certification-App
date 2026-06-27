@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   RefreshCw,
@@ -14,6 +14,8 @@ import {
   User,
   Bot,
   Settings2,
+  Eye,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +35,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ReadinessScore } from "@/components/shared/readiness-score";
@@ -42,15 +55,64 @@ import {
   documents,
   menus,
   activityLog,
+  ingredients,
 } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
 
 const REQ_CATEGORIES = ["Document", "Employee", "Ingredient", "Supplier", "Location"];
+
+// Inline missing documents (not modifying mock-data.ts)
+const missingDocuments = [
+  {
+    id: "doc-missing-001",
+    name: "Process Flowchart",
+    type: "Process Flowchart",
+    linkedTo: "",
+    linkedId: "",
+    status: "Missing",
+    uploadDate: null,
+    expiryDate: null,
+    uploadedBy: null,
+  },
+  {
+    id: "doc-missing-002",
+    name: "Cleaning SOP",
+    type: "Cleaning SOP",
+    linkedTo: "",
+    linkedId: "",
+    status: "Missing",
+    uploadDate: null,
+    expiryDate: null,
+    uploadedBy: null,
+  },
+  {
+    id: "doc-missing-003",
+    name: "Internal Halal Committee Letter",
+    type: "Appointment Letter",
+    linkedTo: "",
+    linkedId: "",
+    status: "Missing",
+    uploadDate: null,
+    expiryDate: null,
+    uploadedBy: null,
+  },
+];
 
 function RequirementStatusIcon({ status }: { status: string }) {
   if (status === "passed") return <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />;
   if (status === "failed") return <XCircle className="h-4 w-4 text-red-600 shrink-0" />;
   if (status === "warning") return <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />;
   return <MinusCircle className="h-4 w-4 text-gray-400 shrink-0" />;
+}
+
+function getDocSourceBadge(doc: typeof documents[0]) {
+  if (doc.linkedTo === "Company" || doc.linkedTo === "Location" || doc.linkedTo === "Supplier" || doc.linkedTo === "Employee" || doc.linkedTo === "Ingredient") {
+    return <Badge variant="outline" className="text-[10px] border-gray-200 text-gray-600 bg-gray-50">Linked from {doc.linkedTo}</Badge>;
+  }
+  if (doc.status === "Valid" && doc.uploadDate) {
+    return <Badge variant="outline" className="text-[10px] border-green-200 text-green-700 bg-green-50">Uploaded {doc.uploadDate}</Badge>;
+  }
+  return <span className="text-xs text-muted-foreground">—</span>;
 }
 
 export default function ApplicationDetailPage({
@@ -64,11 +126,41 @@ export default function ApplicationDetailPage({
   const appMenus = menus.filter((m) => app.includedMenus.includes(m.id));
   const appActivity = activityLog.filter((l) => l.record.includes("APP"));
 
+  // Document view dialog
+  const [viewDoc, setViewDoc] = useState<typeof documents[0] | null>(null);
+  // Upload dialog
+  const [uploadDoc, setUploadDoc] = useState<(typeof missingDocuments)[0] | null>(null);
+
+  // Ingredients tab data
+  const ingredientData = useMemo(() => {
+    const ingredientIds = new Set<string>();
+    appMenus.forEach((m) => m.ingredients.forEach((id) => ingredientIds.add(id)));
+    const resolved = Array.from(ingredientIds)
+      .map((id) => ingredients.find((ing) => ing.id === id))
+      .filter(Boolean) as typeof ingredients;
+
+    const supplierSet = new Set(resolved.map((ing) => ing.supplierName));
+    const certified = resolved.filter((ing) => ing.certStatus === "Valid").length;
+    const expiredOrExpiring = resolved.filter(
+      (ing) => ing.certStatus === "Expired" || ing.certStatus === "Expiring Soon"
+    ).length;
+
+    return {
+      ingredients: resolved,
+      supplierCount: supplierSet.size,
+      certified,
+      expiredOrExpiring,
+    };
+  }, [appMenus]);
+
   const sourceIcon = (source: string) => {
     if (source === "ai") return <Bot className="h-3 w-3" />;
     if (source === "system") return <Settings2 className="h-3 w-3" />;
     return <User className="h-3 w-3" />;
   };
+
+  // Combined docs for display (real + missing)
+  const allDocs = [...documents.slice(0, 8), ...missingDocuments];
 
   return (
     <div className="space-y-6">
@@ -105,6 +197,7 @@ export default function ApplicationDetailPage({
           <TabsTrigger value="requirements">Requirements</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="menus">Menus</TabsTrigger>
+          <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
@@ -230,20 +323,49 @@ export default function ApplicationDetailPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Document Name</TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Expiry</TableHead>
                     <TableHead>Uploaded By</TableHead>
+                    <TableHead className="w-[80px]">View</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {documents.slice(0, 8).map((doc) => (
                     <TableRow key={doc.id} className={doc.status === "Expiring Soon" ? "bg-amber-50/30" : doc.status === "Expired" ? "bg-red-50/30" : ""}>
                       <TableCell className="font-medium text-sm">{doc.name}</TableCell>
+                      <TableCell>{getDocSourceBadge(doc)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{doc.type}</TableCell>
                       <TableCell><StatusBadge status={doc.status} /></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{doc.expiryDate ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{doc.uploadedBy}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon-sm" onClick={() => setViewDoc(doc)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {/* Missing documents */}
+                  {missingDocuments.map((doc) => (
+                    <TableRow key={doc.id} className="bg-red-50/20">
+                      <TableCell className="font-medium text-sm">{doc.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] border-red-200 text-red-700 bg-red-50">Required</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{doc.type}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs border-red-200 text-red-700 bg-red-50">Missing</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setUploadDoc(doc)}>
+                          <Upload className="mr-1 h-3 w-3" />
+                          Upload
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -279,6 +401,83 @@ export default function ApplicationDetailPage({
           </Card>
         </TabsContent>
 
+        {/* Ingredients */}
+        <TabsContent value="ingredients" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Ingredient & Source Summary</CardTitle>
+              <CardDescription>
+                {ingredientData.ingredients.length} total ingredients from {ingredientData.supplierCount} suppliers | {ingredientData.certified} certified | {ingredientData.expiredOrExpiring} expired/expiring
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ingredient Name</TableHead>
+                    <TableHead>Brand</TableHead>
+                    <TableHead>Supplier / Manufacturer</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead>Halal Cert Status</TableHead>
+                    <TableHead>Cert Expiry</TableHead>
+                    <TableHead>Risk Flags</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ingredientData.ingredients.map((ing) => (
+                    <TableRow
+                      key={ing.id}
+                      className={
+                        ing.certStatus === "Expired"
+                          ? "bg-red-50/50"
+                          : ing.certStatus === "Expiring Soon"
+                          ? "bg-amber-50/50"
+                          : ""
+                      }
+                    >
+                      <TableCell className="font-medium text-sm">{ing.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{ing.brand}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{ing.supplierName}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{ing.countryOfOrigin}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px]",
+                            ing.certStatus === "Valid"
+                              ? "border-green-200 text-green-700 bg-green-50"
+                              : ing.certStatus === "Expiring Soon"
+                              ? "border-amber-200 text-amber-700 bg-amber-50"
+                              : ing.certStatus === "Expired"
+                              ? "border-red-200 text-red-700 bg-red-50"
+                              : ""
+                          )}
+                        >
+                          {ing.certStatus}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{ing.certExpiry ?? "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {ing.riskFlags.length > 0 ? (
+                            ing.riskFlags.map((flag) => (
+                              <Badge key={flag} variant="outline" className="text-[10px] border-orange-200 text-orange-700 bg-orange-50">
+                                {flag}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Activity */}
         <TabsContent value="activity" className="mt-4">
           <Card>
@@ -310,6 +509,82 @@ export default function ApplicationDetailPage({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Document View Dialog */}
+      <Dialog open={!!viewDoc} onOpenChange={() => setViewDoc(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{viewDoc?.name}</DialogTitle>
+            <DialogDescription>Document preview</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Placeholder preview area */}
+            <div className="flex flex-col items-center justify-center h-48 rounded-lg bg-muted border-2 border-dashed border-gray-200">
+              <FileText className="h-12 w-12 text-muted-foreground/50 mb-2" />
+              <span className="text-sm text-muted-foreground">Document Preview</span>
+            </div>
+            {/* Document metadata */}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-xs text-muted-foreground">Type</div>
+                <div className="font-medium">{viewDoc?.type}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Status</div>
+                <div className="font-medium">{viewDoc?.status}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Uploaded By</div>
+                <div className="font-medium">{viewDoc?.uploadedBy}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Expiry</div>
+                <div className="font-medium">{viewDoc?.expiryDate ?? "No expiry"}</div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
+              Close
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Document Dialog */}
+      <Dialog open={!!uploadDoc} onOpenChange={() => setUploadDoc(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload {uploadDoc?.name}</DialogTitle>
+            <DialogDescription>Upload the required document</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Document Type</Label>
+              <div className="text-sm font-medium text-muted-foreground bg-muted rounded-lg px-3 py-2">{uploadDoc?.type}</div>
+            </div>
+            {/* File picker placeholder */}
+            <div className="space-y-2">
+              <Label>File</Label>
+              <div className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary/40 transition-colors cursor-pointer">
+                <Upload className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                <span className="text-sm text-muted-foreground">Drag & drop or click to upload</span>
+                <span className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG up to 10MB</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Expiry Date (if applicable)</Label>
+              <Input type="date" />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button onClick={() => setUploadDoc(null)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

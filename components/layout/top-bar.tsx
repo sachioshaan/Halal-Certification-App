@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Bell, Search, ChevronRight } from "lucide-react";
+import { Bell, Search, ChevronRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,6 +57,7 @@ function buildBreadcrumbs(pathname: string) {
 export function TopBar() {
   const pathname = usePathname();
   const crumbs = buildBreadcrumbs(pathname);
+  const [lang, setLang] = useState<"EN" | "MY">("EN");
 
   return (
     <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
@@ -86,6 +88,17 @@ export function TopBar() {
             className="w-56 pl-8 h-9 text-sm"
           />
         </div>
+
+        {/* Language Toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 gap-1.5 text-xs font-medium"
+          onClick={() => setLang(lang === "EN" ? "MY" : "EN")}
+        >
+          <Globe className="h-3.5 w-3.5" />
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold">{lang}</span>
+        </Button>
 
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
