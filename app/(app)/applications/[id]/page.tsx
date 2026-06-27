@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import Link from "next/link";
 import {
   RefreshCw,
   Download,
@@ -10,12 +9,13 @@ import {
   AlertCircle,
   MinusCircle,
   FileText,
-  Clock,
   User,
   Bot,
   Settings2,
   Eye,
   Upload,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,6 +44,13 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/shared/page-header";
@@ -130,6 +137,12 @@ export default function ApplicationDetailPage({
   const [viewDoc, setViewDoc] = useState<typeof documents[0] | null>(null);
   // Upload dialog
   const [uploadDoc, setUploadDoc] = useState<(typeof missingDocuments)[0] | null>(null);
+  // Delete document dialog
+  const [deleteDoc, setDeleteDoc] = useState<typeof documents[0] | null>(null);
+  // Menu actions
+  const [viewMenu, setViewMenu] = useState<typeof menus[0] | null>(null);
+  const [editMenu, setEditMenu] = useState<typeof menus[0] | null>(null);
+  const [deleteMenu, setDeleteMenu] = useState<typeof menus[0] | null>(null);
 
   // Ingredients tab data
   const ingredientData = useMemo(() => {
@@ -341,9 +354,14 @@ export default function ApplicationDetailPage({
                       <TableCell className="text-sm text-muted-foreground">{doc.expiryDate ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{doc.uploadedBy}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon-sm" onClick={() => setViewDoc(doc)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon-sm" onClick={() => setViewDoc(doc)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="text-destructive" onClick={() => setDeleteDoc(doc)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -394,6 +412,17 @@ export default function ApplicationDetailPage({
                     <span className={`text-sm font-medium ${menu.readiness === "pass" ? "text-green-600" : menu.readiness === "warning" ? "text-amber-600" : "text-red-600"}`}>
                       {menu.readinessScore}%
                     </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewMenu(menu)}>
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditMenu(menu)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteMenu(menu)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -582,6 +611,117 @@ export default function ApplicationDetailPage({
               Cancel
             </DialogClose>
             <Button onClick={() => setUploadDoc(null)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Document Dialog */}
+      <Dialog open={!!deleteDoc} onOpenChange={() => setDeleteDoc(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Document</DialogTitle>
+            <DialogDescription>Remove this document from the application?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDoc(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => setDeleteDoc(null)}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Menu Sheet */}
+      <Sheet open={!!viewMenu} onOpenChange={() => setViewMenu(null)}>
+        <SheetContent className="sm:max-w-md overflow-y-auto p-6">
+          {viewMenu && (
+            <>
+              <SheetHeader className="mb-6">
+                <SheetTitle>{viewMenu.name}</SheetTitle>
+                <SheetDescription>{viewMenu.category} · {viewMenu.locationName}</SheetDescription>
+              </SheetHeader>
+              <div className="space-y-5">
+                <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+                  <div className={`h-3 w-3 rounded-full ${viewMenu.readiness === "pass" ? "bg-green-500" : viewMenu.readiness === "warning" ? "bg-amber-500" : "bg-red-500"}`} />
+                  <span className="text-sm font-medium">Readiness: {viewMenu.readinessScore}%</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{viewMenu.description}</p>
+                {[
+                  ["Category", viewMenu.category],
+                  ["Location", viewMenu.locationName],
+                ].map(([label, value]) => (
+                  <div key={String(label)}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-sm font-medium">{value}</p>
+                  </div>
+                ))}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Ingredients ({viewMenu.ingredients.length})</p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">Name</TableHead>
+                        <TableHead className="text-xs">Supplier</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {viewMenu.ingredients.map((ingId) => {
+                        const ing = ingredients.find((i) => i.id === ingId);
+                        if (!ing) return null;
+                        return (
+                          <TableRow key={ingId}>
+                            <TableCell className="text-sm">{ing.name}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{ing.supplierName}</TableCell>
+                            <TableCell><StatusBadge status={ing.certStatus} /></TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Edit Menu Dialog */}
+      <Dialog open={!!editMenu} onOpenChange={() => setEditMenu(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Menu</DialogTitle>
+            <DialogDescription>Update menu information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input defaultValue={editMenu?.name} />
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Input defaultValue={editMenu?.category} />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input defaultValue={editMenu?.description} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditMenu(null)}>Cancel</Button>
+            <Button onClick={() => setEditMenu(null)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Menu Dialog */}
+      <Dialog open={!!deleteMenu} onOpenChange={() => setDeleteMenu(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Menu</DialogTitle>
+            <DialogDescription>Remove {deleteMenu?.name} from this application?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteMenu(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => setDeleteMenu(null)}>Remove</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

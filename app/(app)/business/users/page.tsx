@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,6 +46,13 @@ export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<string | null>("Viewer");
+  const [search, setSearch] = useState("");
+
+  const filteredUsers = users.filter((u) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+  });
 
   return (
     <div className="space-y-6">
@@ -62,8 +69,21 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Team Members</CardTitle>
-          <CardDescription>{users.length} members · Nasi Lemak Sdn Bhd workspace</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-base">Team Members</CardTitle>
+              <CardDescription>{filteredUsers.length} members · Nasi Lemak Sdn Bhd workspace</CardDescription>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 w-48 text-xs"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -77,7 +97,7 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -99,9 +119,13 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-7 text-xs">Edit</Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
                       {user.role !== "Owner" && (
-                        <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive">Remove</Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       )}
                     </div>
                   </TableCell>

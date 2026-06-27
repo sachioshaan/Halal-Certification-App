@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Eye } from "lucide-react";
+import { Plus, LayoutGrid, List, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -171,7 +171,7 @@ export default function MenusPage() {
 
       {/* Menu Detail Sheet */}
       <Sheet open={!!selected} onOpenChange={() => setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetContent className="sm:max-w-md overflow-y-auto p-6">
           {selected && (
             <>
               <SheetHeader className="mb-6">
@@ -209,6 +209,10 @@ export default function MenusPage() {
                       );
                     })}
                   </div>
+                </div>
+                <div className="flex gap-2 pt-4 border-t mt-4">
+                  <Button variant="outline" size="sm" className="flex-1"><Pencil className="mr-2 h-3.5 w-3.5" />Edit</Button>
+                  <Button variant="destructive" size="sm" className="flex-1"><Trash2 className="mr-2 h-3.5 w-3.5" />Delete</Button>
                 </div>
               </div>
             </>

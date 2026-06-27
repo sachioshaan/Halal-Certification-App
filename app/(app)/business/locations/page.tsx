@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, MapPin, Users, UtensilsCrossed, X } from "lucide-react";
+import { Plus, MapPin, Users, UtensilsCrossed, X, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -31,6 +32,7 @@ const AI_RECS = [
 
 export default function LocationsPage() {
   const [selectedLocation, setSelectedLocation] = useState<typeof locations[0] | null>(null);
+  const [search, setSearch] = useState("");
 
   const stats = [
     { label: "Total Locations", value: locations.length, color: "text-primary" },
@@ -65,9 +67,24 @@ export default function LocationsPage() {
 
       <AiRecommendations recommendations={AI_RECS} />
 
+      {/* Search */}
+      <div className="relative max-w-xs">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          placeholder="Search locations..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8 h-8 text-xs"
+        />
+      </div>
+
       {/* Location cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {locations.map((loc) => {
+        {locations.filter((loc) => {
+          if (!search) return true;
+          const q = search.toLowerCase();
+          return loc.name.toLowerCase().includes(q) || loc.address.toLowerCase().includes(q);
+        }).map((loc) => {
           const locEmployees = employees.filter((e) => e.locationId === loc.id);
           const locMenus = menus.filter((m) => m.locationId === loc.id);
           return (
@@ -174,6 +191,11 @@ export default function LocationsPage() {
                       <div key={id} className="text-sm text-primary">{id}</div>
                     ))
                   )}
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t mt-4">
+                  <Button variant="outline" size="sm" className="flex-1"><Pencil className="mr-2 h-3.5 w-3.5" />Edit</Button>
+                  <Button variant="destructive" size="sm" className="flex-1"><Trash2 className="mr-2 h-3.5 w-3.5" />Delete</Button>
                 </div>
               </div>
             </>

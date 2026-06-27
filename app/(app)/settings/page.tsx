@@ -104,32 +104,32 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Business Category</Label>
-                    <Select defaultValue="fb">
+                    <Select defaultValue="Food & Beverage">
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="fb">Food & Beverage</SelectItem>
-                        <SelectItem value="logistics">Logistics</SelectItem>
-                        <SelectItem value="cosmetics">Cosmetics</SelectItem>
+                        <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
+                        <SelectItem value="Logistics">Logistics</SelectItem>
+                        <SelectItem value="Cosmetics">Cosmetics</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Timezone</Label>
-                    <Select defaultValue="kl">
+                    <Select defaultValue="Asia/Kuala_Lumpur (UTC+8)">
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="kl">Asia/Kuala_Lumpur (UTC+8)</SelectItem>
-                        <SelectItem value="sg">Asia/Singapore (UTC+8)</SelectItem>
+                        <SelectItem value="Asia/Kuala_Lumpur (UTC+8)">Asia/Kuala_Lumpur (UTC+8)</SelectItem>
+                        <SelectItem value="Asia/Singapore (UTC+8)">Asia/Singapore (UTC+8)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Language</Label>
-                    <Select defaultValue="en">
+                    <Select defaultValue="English">
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="ms">Bahasa Malaysia</SelectItem>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Bahasa Malaysia">Bahasa Malaysia</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

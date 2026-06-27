@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,11 +25,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AiRecommendations } from "@/components/shared/ai-recommendations";
-import { ingredients } from "@/lib/mock-data";
+import { ingredients, menus } from "@/lib/mock-data";
 
 const AI_RECS = [
   {
@@ -50,13 +67,16 @@ const RISK_FLAG_LABELS: Record<string, { label: string; emoji: string; className
 };
 
 export default function IngredientsPage() {
-  const [riskFilter, setRiskFilter] = useState<string | null>("all");
+  const [riskFilter, setRiskFilter] = useState<string | null>("All Ingredients");
+  const [viewIngredient, setViewIngredient] = useState<typeof ingredients[0] | null>(null);
+  const [editIngredient, setEditIngredient] = useState<typeof ingredients[0] | null>(null);
+  const [deleteIngredient, setDeleteIngredient] = useState<typeof ingredients[0] | null>(null);
 
   const filtered = ingredients.filter((ing) => {
-    if (!riskFilter || riskFilter === "all") return true;
-    if (riskFilter === "high") return ing.isCritical;
-    if (riskFilter === "expired") return ing.certStatus === "Expired";
-    if (riskFilter === "expiring") return ing.certStatus === "Expiring Soon";
+    if (!riskFilter || riskFilter === "All Ingredients") return true;
+    if (riskFilter === "High Risk / Critical") return ing.isCritical;
+    if (riskFilter === "Cert Expired") return ing.certStatus === "Expired";
+    if (riskFilter === "Cert Expiring") return ing.certStatus === "Expiring Soon";
     return true;
   });
 
@@ -107,10 +127,10 @@ export default function IngredientsPage() {
                   <SelectValue placeholder="Filter by risk" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Ingredients</SelectItem>
-                  <SelectItem value="high">High Risk / Critical</SelectItem>
-                  <SelectItem value="expired">Cert Expired</SelectItem>
-                  <SelectItem value="expiring">Cert Expiring</SelectItem>
+                  <SelectItem value="All Ingredients">All Ingredients</SelectItem>
+                  <SelectItem value="High Risk / Critical">High Risk / Critical</SelectItem>
+                  <SelectItem value="Cert Expired">Cert Expired</SelectItem>
+                  <SelectItem value="Cert Expiring">Cert Expiring</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -129,6 +149,7 @@ export default function IngredientsPage() {
                 <TableHead>Critical</TableHead>
                 <TableHead>Cert Status</TableHead>
                 <TableHead>Cert Expiry</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,12 +196,158 @@ export default function IngredientsPage() {
                   </TableCell>
                   <TableCell><StatusBadge status={ing.certStatus} /></TableCell>
                   <TableCell className="text-sm text-muted-foreground">{ing.certExpiry ?? "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewIngredient(ing)}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditIngredient(ing)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteIngredient(ing)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* View Ingredient Sheet */}
+      <Sheet open={!!viewIngredient} onOpenChange={() => setViewIngredient(null)}>
+        <SheetContent className="sm:max-w-md overflow-y-auto p-6">
+          {viewIngredient && (
+            <>
+              <SheetHeader className="mb-6">
+                <SheetTitle>{viewIngredient.name}</SheetTitle>
+                <SheetDescription>{viewIngredient.category} · {viewIngredient.brand}</SheetDescription>
+              </SheetHeader>
+              <div className="space-y-4">
+                {[
+                  ["Brand", viewIngredient.brand],
+                  ["Supplier", viewIngredient.supplierName],
+                  ["Manufacturer", viewIngredient.supplierName],
+                  ["Country of Origin", viewIngredient.countryOfOrigin],
+                  ["Category", viewIngredient.category],
+                ].map(([label, value]) => (
+                  <div key={String(label)}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-sm font-medium">{value}</p>
+                  </div>
+                ))}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Risk Flags</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {viewIngredient.riskFlags.length === 0 ? (
+                      <span className="text-sm text-muted-foreground">None</span>
+                    ) : (
+                      viewIngredient.riskFlags.map((flag) => {
+                        const config = RISK_FLAG_LABELS[flag];
+                        return config ? (
+                          <Badge key={flag} variant="outline" className={`text-xs ${config.className}`}>
+                            {config.emoji} {config.label}
+                          </Badge>
+                        ) : null;
+                      })
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Halal Certification</p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={viewIngredient.certStatus} />
+                      {viewIngredient.isCritical && (
+                        <Badge variant="outline" className="text-xs text-red-700 border-red-200 bg-red-50">Critical</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Cert No: HC-{viewIngredient.id.replace("ING-", "")}-2024</p>
+                    <p className="text-sm text-muted-foreground">Expiry: {viewIngredient.certExpiry ?? "—"}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Linked Menus</p>
+                  <div className="space-y-1.5">
+                    {menus.filter((m) => m.ingredients.includes(viewIngredient.id)).length === 0 ? (
+                      <span className="text-sm text-muted-foreground">Not used in any menu</span>
+                    ) : (
+                      menus.filter((m) => m.ingredients.includes(viewIngredient.id)).map((m) => (
+                        <div key={m.id} className="text-sm py-1 border-b last:border-0">
+                          {m.name} <span className="text-muted-foreground">({m.category})</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Edit Ingredient Dialog */}
+      <Dialog open={!!editIngredient} onOpenChange={() => setEditIngredient(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Ingredient</DialogTitle>
+            <DialogDescription>Update ingredient information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input defaultValue={editIngredient?.name} />
+            </div>
+            <div className="space-y-2">
+              <Label>Brand</Label>
+              <Input defaultValue={editIngredient?.brand} />
+            </div>
+            <div className="space-y-2">
+              <Label>Supplier</Label>
+              <Input defaultValue={editIngredient?.supplierName} />
+            </div>
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Input defaultValue={editIngredient?.countryOfOrigin} />
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Input defaultValue={editIngredient?.category} />
+            </div>
+            <div className="space-y-2">
+              <Label>Risk Flags</Label>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(RISK_FLAG_LABELS).map(([key, config]) => (
+                  <label key={key} className="flex items-center gap-1.5 text-xs">
+                    <input type="checkbox" defaultChecked={editIngredient?.riskFlags.includes(key as never)} className="rounded" />
+                    {config.emoji} {config.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditIngredient(null)}>Cancel</Button>
+            <Button onClick={() => setEditIngredient(null)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Ingredient Dialog */}
+      <Dialog open={!!deleteIngredient} onOpenChange={() => setDeleteIngredient(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Ingredient</DialogTitle>
+            <DialogDescription>Are you sure you want to delete {deleteIngredient?.name}? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteIngredient(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => setDeleteIngredient(null)}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AiRecommendations } from "@/components/shared/ai-recommendations";
@@ -42,12 +52,14 @@ const AI_RECS = [
 ];
 
 export default function EmployeesPage() {
-  const [locationFilter, setLocationFilter] = useState<string | null>("all");
-  const [roleFilter, setRoleFilter] = useState<string | null>("all");
+  const [locationFilter, setLocationFilter] = useState<string | null>("All Locations");
+  const [roleFilter, setRoleFilter] = useState<string | null>("All Roles");
+  const [editEmployee, setEditEmployee] = useState<typeof employees[0] | null>(null);
+  const [deleteEmployee, setDeleteEmployee] = useState<typeof employees[0] | null>(null);
 
   const filtered = employees.filter((e) => {
-    const locOk = !locationFilter || locationFilter === "all" || e.locationId === locationFilter;
-    const roleOk = !roleFilter || roleFilter === "all" || e.halalRole === roleFilter;
+    const locOk = !locationFilter || locationFilter === "All Locations" || e.locationId === locationFilter;
+    const roleOk = !roleFilter || roleFilter === "All Roles" || e.halalRole === roleFilter;
     return locOk && roleOk;
   });
 
@@ -97,7 +109,7 @@ export default function EmployeesPage() {
                   <SelectValue placeholder="All Locations" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="All Locations">All Locations</SelectItem>
                   {locations.map((l) => (
                     <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                   ))}
@@ -108,7 +120,7 @@ export default function EmployeesPage() {
                   <SelectValue placeholder="All Roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="All Roles">All Roles</SelectItem>
                   <SelectItem value="Halal PIC">Halal PIC</SelectItem>
                   <SelectItem value="Halal Supervisor">Halal Supervisor</SelectItem>
                   <SelectItem value="Halal Executive">Halal Executive</SelectItem>
@@ -130,6 +142,7 @@ export default function EmployeesPage() {
                 <TableHead>Halal Role</TableHead>
                 <TableHead>Halal Cert</TableHead>
                 <TableHead>Food Handler</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -158,12 +171,76 @@ export default function EmployeesPage() {
                   <TableCell>
                     <StatusBadge status={emp.foodHandlerCert} />
                   </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditEmployee(emp)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteEmployee(emp)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={!!editEmployee} onOpenChange={() => setEditEmployee(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Employee</DialogTitle>
+            <DialogDescription>Update employee information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input defaultValue={editEmployee?.name} />
+            </div>
+            <div className="space-y-2">
+              <Label>IC / Passport No</Label>
+              <Input defaultValue={editEmployee?.icNo} />
+            </div>
+            <div className="space-y-2">
+              <Label>Nationality</Label>
+              <Input defaultValue={editEmployee?.nationality} />
+            </div>
+            <div className="space-y-2">
+              <Label>Employment Type</Label>
+              <Input defaultValue={editEmployee?.employmentType} />
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input defaultValue={editEmployee?.locationName} />
+            </div>
+            <div className="space-y-2">
+              <Label>Halal Role</Label>
+              <Input defaultValue={editEmployee?.halalRole ?? ""} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEmployee(null)}>Cancel</Button>
+            <Button onClick={() => setEditEmployee(null)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Employee Dialog */}
+      <Dialog open={!!deleteEmployee} onOpenChange={() => setDeleteEmployee(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Employee</DialogTitle>
+            <DialogDescription>Are you sure you want to delete {deleteEmployee?.name}? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteEmployee(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => setDeleteEmployee(null)}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

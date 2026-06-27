@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Filter } from "lucide-react";
+import { Upload, Filter, Eye, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -59,10 +59,15 @@ const DOC_TYPES = ["All", "Company Registration", "Business Licence", "Food Prem
 export default function DocumentsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("All");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [editDoc, setEditDoc] = useState<typeof documents[0] | null>(null);
+  const [deleteDoc, setDeleteDoc] = useState<typeof documents[0] | null>(null);
 
-  const filtered = typeFilter === "All"
-    ? documents
-    : documents.filter((d) => d.type === typeFilter);
+  const filtered = documents.filter((d) => {
+    const matchesType = typeFilter === "All" || d.type === typeFilter;
+    const matchesSearch = !search || d.name.toLowerCase().includes(search.toLowerCase());
+    return matchesType && matchesSearch;
+  });
 
   const stats = [
     { label: "Total", value: documents.length, color: "text-primary" },
@@ -104,16 +109,27 @@ export default function DocumentsPage() {
               <CardTitle className="text-base">Documents</CardTitle>
               <CardDescription>{filtered.length} documents</CardDescription>
             </div>
-            <div className="overflow-x-auto">
-              <Tabs value={typeFilter} onValueChange={setTypeFilter}>
-                <TabsList className="h-8">
-                  {["All", "Company Registration", "Business Licence", "Halal Training Certificate", "Supplier Halal Certificate", "SOP"].map((t) => (
-                    <TabsTrigger key={t} value={t} className="text-xs h-7 px-2.5">
-                      {t === "Halal Training Certificate" ? "Halal Cert" : t === "Supplier Halal Certificate" ? "Supplier Cert" : t}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Search documents..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 h-8 w-48 text-xs"
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <Tabs value={typeFilter} onValueChange={setTypeFilter}>
+                  <TabsList className="h-8">
+                    {["All", "Company Registration", "Business Licence", "Halal Training Certificate", "Supplier Halal Certificate", "SOP"].map((t) => (
+                      <TabsTrigger key={t} value={t} className="text-xs h-7 px-2.5">
+                        {t === "Halal Training Certificate" ? "Halal Cert" : t === "Supplier Halal Certificate" ? "Supplier Cert" : t}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -128,7 +144,7 @@ export default function DocumentsPage() {
                 <TableHead>Expiry Date</TableHead>
                 <TableHead>Uploaded</TableHead>
                 <TableHead>By</TableHead>
-                <TableHead className="w-[80px]">Action</TableHead>
+                <TableHead className="w-[100px]">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,7 +167,17 @@ export default function DocumentsPage() {
                   <TableCell className="text-sm text-muted-foreground">{doc.uploadDate}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{doc.uploadedBy}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditDoc(doc)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteDoc(doc)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -201,6 +227,48 @@ export default function DocumentsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setUploadOpen(false)}>Cancel</Button>
             <Button onClick={() => setUploadOpen(false)}>Upload</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Document Dialog */}
+      <Dialog open={!!editDoc} onOpenChange={() => setEditDoc(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Document</DialogTitle>
+            <DialogDescription>Update document information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Document Name</Label>
+              <Input defaultValue={editDoc?.name} />
+            </div>
+            <div className="space-y-2">
+              <Label>Document Type</Label>
+              <Input defaultValue={editDoc?.type} />
+            </div>
+            <div className="space-y-2">
+              <Label>Expiry Date</Label>
+              <Input type="date" defaultValue={editDoc?.expiryDate ?? ""} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDoc(null)}>Cancel</Button>
+            <Button onClick={() => setEditDoc(null)}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Document Dialog */}
+      <Dialog open={!!deleteDoc} onOpenChange={() => setDeleteDoc(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Document</DialogTitle>
+            <DialogDescription>Are you sure you want to delete {deleteDoc?.name}? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDoc(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => setDeleteDoc(null)}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
